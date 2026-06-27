@@ -264,6 +264,7 @@ class HevyExercise(BaseModel):
     """An exercise within a Hevy workout."""
 
     exercise_template_id: str
+    title: Optional[str] = None  # exercise name from Hevy API (e.g. "Barbell Bench Press")
     notes: Optional[str] = None
     sets: list[HevySet] = Field(default_factory=list)
 

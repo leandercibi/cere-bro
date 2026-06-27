@@ -453,6 +453,25 @@ def update_workout_calories(
     conn.commit()
 
 
+def repair_workout(
+    conn: sqlite3.Connection,
+    hevy_id: str,
+    title: str,
+    exercises: list[HevyExercise],
+) -> None:
+    """Update title and exercises_json for an existing workout entry.
+
+    Called on every sync pass so that entries stored before the title/exercise-name
+    fix are backfilled with the current Hevy API data.
+    """
+    exercises_json = json.dumps([e.model_dump() for e in exercises])
+    conn.execute(
+        "UPDATE workouts SET title = ?, exercises_json = ? WHERE hevy_id = ?",
+        (title, exercises_json, hevy_id),
+    )
+    conn.commit()
+
+
 def get_all_workouts(conn: sqlite3.Connection) -> list[StoredWorkout]:
     """Return every workout, sorted started_at ASC.
 
@@ -574,3 +593,31 @@ def recompute_daily_totals(conn: sqlite3.Connection, day: date) -> DailyTotals:
         "SELECT * FROM daily_totals WHERE date = ?", (day_iso,)
     ).fetchone()
     return _row_to_daily_totals(persisted)
+
+
+# ---------- Notion page tracking ----------
+
+def get_notion_page_id(
+    conn: sqlite3.Connection, entity_type: str, entity_id: str
+) -> str | None:
+    """Return stored Notion page ID for this entity, or None if not yet synced."""
+    row = conn.execute(
+        "SELECT notion_page_id FROM notion_pages WHERE entity_type = ? AND entity_id = ?",
+        (entity_type, entity_id),
+    ).fetchone()
+    return row["notion_page_id"] if row else None
+
+
+def upsert_notion_page(
+    conn: sqlite3.Connection, entity_type: str, entity_id: str, notion_page_id: str
+) -> None:
+    """Insert or update the Notion page ID for this entity."""
+    conn.execute(
+        """INSERT INTO notion_pages (entity_type, entity_id, notion_page_id, synced_at)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT (entity_type, entity_id) DO UPDATE SET
+               notion_page_id = excluded.notion_page_id,
+               synced_at = excluded.synced_at""",
+        (entity_type, entity_id, notion_page_id, datetime.now().isoformat()),
+    )
+    conn.commit()

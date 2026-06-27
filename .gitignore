@@ -41,3 +41,15 @@ logs/
 
 # uv
 uv.lock
+
+/.crew/
+/.crew
+!.crew/artifacts/
+!.crew/graphs/
+!.crew/artifacts/.gitkeep
+!.crew/graphs/.gitkeep
+
+# Session-local
+master_db_backup.dump
+scripts/fake_data_ids.json
+.claude/

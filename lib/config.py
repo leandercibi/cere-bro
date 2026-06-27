@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     brave_search_api_key: str = Field(default="", alias="BRAVE_SEARCH_API_KEY")
     tavily_api_key: str = Field(default="", alias="TAVILY_API_KEY")
     hevy_api_key: str = Field(default="", alias="HEVY_API_KEY")
+    notion_api_key: str = Field(default="", alias="NOTION_API_KEY")
 
     db_path: Path = Field(default=Path("./data/cerebro.sqlite"), alias="DB_PATH")
     vault_root: Path = Field(default=Path("./vault"), alias="VAULT_ROOT")
